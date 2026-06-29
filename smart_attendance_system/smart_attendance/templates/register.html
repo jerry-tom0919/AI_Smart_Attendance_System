@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register Face – AI Attendance</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="13" stroke="#6C63FF" stroke-width="2"/>
+          <circle cx="14" cy="11" r="4" fill="#6C63FF"/>
+          <path d="M7 22c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#6C63FF" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-title">Register New Face</div>
+        <div class="logo-sub">Add student to recognition model</div>
+      </div>
+    </div>
+    <a href="/" class="btn-register">← Dashboard</a>
+  </div>
+</header>
+
+<main style="max-width:600px;margin:60px auto;padding:0 20px">
+  <div class="reg-card">
+    <h2 class="reg-title">Student Registration</h2>
+    <p class="reg-sub">Upload 5–10 clear photos of the student's face for accurate recognition.</p>
+
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="rName" placeholder="e.g. Sanju Kumar" class="form-input"/>
+    </div>
+    <div class="form-group">
+      <label>Department</label>
+      <select id="rDept" class="form-input">
+        <option value="">Select Department</option>
+        {% for d in departments %}
+        <option value="{{ d }}">{{ d }}</option>
+        {% endfor %}
+        <option value="CSE">CSE</option>
+        <option value="ECE">ECE</option>
+        <option value="IT">IT</option>
+        <option value="MECH">MECH</option>
+        <option value="AIDS">AIDS</option>
+        <option value="CIVIL">CIVIL</option>
+        <option value="EEE">EEE</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Face Photos (5–10 images recommended)</label>
+      <div class="file-drop" id="fileDrop">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p>Drag & drop images or <label for="rPhotos" style="color:#6C63FF;cursor:pointer">browse files</label></p>
+        <small>JPG, PNG accepted</small>
+        <input type="file" id="rPhotos" multiple accept="image/*" style="display:none" onchange="previewFiles(this)"/>
+      </div>
+      <div id="previewGrid" class="preview-grid"></div>
+    </div>
+
+    <button class="btn btn-purple" style="width:100%;padding:14px;font-size:1rem" onclick="registerFace()">
+      ✓ Register Student
+    </button>
+    <div id="regResult" style="margin-top:16px;text-align:center;font-size:0.9rem"></div>
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  function previewFiles(input) {
+    const grid = document.getElementById("previewGrid");
+    grid.innerHTML = "";
+    [...input.files].forEach(f => {
+      const img = document.createElement("img");
+      img.src = URL.createObjectURL(f);
+      img.className = "preview-img";
+      grid.appendChild(img);
+    });
+  }
+
+  async function registerFace() {
+    const name = document.getElementById("rName").value.trim();
+    const dept = document.getElementById("rDept").value;
+    const files = document.getElementById("rPhotos").files;
+    const res = document.getElementById("regResult");
+
+    if (!name || !dept || files.length === 0) {
+      res.innerHTML = '<span style="color:#ff6b6b">Please fill all fields and upload photos.</span>';
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append("name", name);
+    fd.append("department", dept);
+    [...files].forEach(f => fd.append("photos", f));
+
+    res.innerHTML = '<span style="color:#aaa">Uploading…</span>';
+    try {
+      const r = await fetch("/register", { method: "POST", body: fd });
+      const data = await r.json();
+      if (data.success) {
+        res.innerHTML = `<span style="color:#00D4B4">✓ ${data.name} registered with ${data.saved} photos. Go to dashboard and click "Train Model".</span>`;
+      } else {
+        res.innerHTML = `<span style="color:#ff6b6b">Error: ${data.error}</span>`;
+      }
+    } catch(e) {
+      res.innerHTML = `<span style="color:#ff6b6b">Upload failed.</span>`;
+    }
+  }
+
+  // Drag & drop
+  const drop = document.getElementById("fileDrop");
+  drop.addEventListener("dragover", e => { e.preventDefault(); drop.style.borderColor = "#6C63FF"; });
+  drop.addEventListener("dragleave", () => { drop.style.borderColor = "#2a2a3e"; });
+  drop.addEventListener("drop", e => {
+    e.preventDefault();
+    drop.style.borderColor = "#2a2a3e";
+    const dt = e.dataTransfer;
+    document.getElementById("rPhotos").files = dt.files;
+    previewFiles(document.getElementById("rPhotos"));
+  });
+</script>
+</body>
+</html>

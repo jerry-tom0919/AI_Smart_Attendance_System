@@ -1,0 +1,62 @@
+{
+  "Arun Kumar": {
+    "department": "CSE",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Priya Devi": {
+    "department": "ECE",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Rahul Sharma": {
+    "department": "MECH",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Sanjana Reddy": {
+    "department": "IT",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Vikram Patel": {
+    "department": "AIDS",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Divya Lakshmi": {
+    "department": "CIVIL",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Karthik Raja": {
+    "department": "EEE",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Meena Kumari": {
+    "department": "CSE",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Sanjana": {
+    "department": "AI&DS",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Abinaya": {
+    "department": "AI&DS",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Rethiga": {
+    "department": "AI&DS",
+    "status": "Absent",
+    "time": "\u2014"
+  },
+  "Kathirmathi": {
+    "department": "AI&DS",
+    "status": "Absent",
+    "time": "\u2014"
+  }
+}

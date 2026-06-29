@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Smart Attendance System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <circle cx="14" cy="14" r="13" stroke="#6C63FF" stroke-width="2"/>
+          <circle cx="14" cy="11" r="4" fill="#6C63FF"/>
+          <path d="M7 22c0-3.866 3.134-7 7-7s7 3.134 7 7" stroke="#6C63FF" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="21" cy="9" r="2.5" fill="#00D4B4"/>
+          <path d="M19.5 9l1 1 2-2" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="logo-title">AI Smart Attendance</div>
+        <div class="logo-sub">Facial Recognition System</div>
+      </div>
+    </div>
+    <div class="header-meta">
+      <div class="meta-chip session-chip" id="sessionChip">{{ session }}</div>
+      <div class="meta-chip">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        {{ today }}
+      </div>
+      <div class="meta-chip" id="liveClock">--:--:-- --</div>
+      <a href="/register" class="btn-register">+ Register Face</a>
+    </div>
+  </div>
+</header>
+
+<!-- ── MAIN ── -->
+<main class="main-grid">
+
+  <!-- LEFT: CAMERA -->
+  <section class="camera-panel">
+    <div class="panel-head">
+      <span class="panel-title">Live Recognition Feed</span>
+      <div class="cam-status" id="camStatus">
+        <span class="dot {% if camera_active %}dot-green{% else %}dot-red{% endif %}" id="camDot"></span>
+        <span id="camStatusText">{% if camera_active %}Active{% else %}Offline{% endif %}</span>
+      </div>
+    </div>
+    <div class="cam-container">
+      <img id="videoFeed" src="/video_feed" alt="Camera Feed" class="cam-feed"/>
+      <div class="cam-overlay" id="camOverlay" {% if camera_active %}style="display:none"{% endif %}>
+        <div class="cam-placeholder">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="31" stroke="#333" stroke-width="2"/>
+            <path d="M20 40l6-8 5 6 4-5 9 11" stroke="#444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="26" cy="26" r="4" stroke="#444" stroke-width="2"/>
+          </svg>
+          <p>Camera Offline</p>
+          <small>Click "Start Camera" to begin recognition</small>
+        </div>
+      </div>
+    </div>
+    <div class="cam-controls">
+      <button class="btn btn-green" onclick="startCamera()" id="btnStart">▶ Start Camera</button>
+      <button class="btn btn-red" onclick="stopCamera()" id="btnStop">■ Stop</button>
+      <button class="btn btn-purple" onclick="trainModel()">⚙ Train Model</button>
+      <button class="btn btn-orange" onclick="markAbsent()">✗ Mark Absent</button>
+    </div>
+    <div class="cutoff-banner">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Cutoff times: <strong>9:15 AM</strong> (Present) · <strong>9:15–1:00 PM</strong> (Late) · <strong>After 1:00 PM</strong> (Absent)
+    </div>
+
+    <!-- LIVE DETECTION LOG -->
+    <div class="panel-head" style="margin-top:18px">
+      <span class="panel-title">Recent Detections</span>
+    </div>
+    <div id="detectionLog" class="detection-log">
+      <div class="log-empty">No detections yet</div>
+    </div>
+  </section>
+
+  <!-- RIGHT: STATS + TABLE -->
+  <section class="data-panel">
+
+    <!-- STATS CARDS -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card green">
+        <div class="stat-val" id="statPresent">0</div>
+        <div class="stat-label">Present</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-val" id="statLate">0</div>
+        <div class="stat-label">Late</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-val" id="statAbsent">0</div>
+        <div class="stat-label">Absent</div>
+      </div>
+      <div class="stat-card gray">
+        <div class="stat-val" id="statUnmarked">0</div>
+        <div class="stat-label">Unmarked</div>
+      </div>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="prog-seg green" id="progPresent" style="width:0%"></div>
+        <div class="prog-seg yellow" id="progLate" style="width:0%"></div>
+        <div class="prog-seg red" id="progAbsent" style="width:0%"></div>
+      </div>
+      <div class="prog-legend">
+        <span><i class="dot-s green"></i>Present</span>
+        <span><i class="dot-s yellow"></i>Late</span>
+        <span><i class="dot-s red"></i>Absent</span>
+        <span><i class="dot-s gray"></i>Unmarked</span>
+      </div>
+    </div>
+
+    <!-- ATTENDANCE TABLE -->
+    <div class="table-header">
+      <span class="panel-title">Attendance Register</span>
+      <div class="table-actions">
+        <input type="text" id="searchBox" placeholder="Search student…" oninput="filterTable()" class="search-input"/>
+        <button class="btn btn-export" onclick="exportCSV()">↓ Export CSV</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table class="att-table" id="attTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="attBody">
+          <tr><td colspan="5" class="loading-row">Loading attendance…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </section>
+</main>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
